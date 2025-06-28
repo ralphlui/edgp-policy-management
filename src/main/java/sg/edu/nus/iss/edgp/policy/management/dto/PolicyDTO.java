@@ -1,6 +1,5 @@
 package sg.edu.nus.iss.edgp.policy.management.dto;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,9 +17,8 @@ public class PolicyDTO {
 	private String domainName;
 	private boolean isPublished;
 	private List<Rule> rules = new ArrayList<>();
-	private LocalDateTime createdDateTime = LocalDateTime.now();
 	private String createdBy;
-	private LocalDateTime lastUpdatedDateTime;
 	private String lastUpdatedBy;
+	private String organizationId;
 
 }

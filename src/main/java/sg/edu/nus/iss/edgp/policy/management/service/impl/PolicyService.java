@@ -32,6 +32,7 @@ public class PolicyService implements IPolicyService {
 			policy.setRules(policyReq.getRules());
 			policy.setCreatedBy(userId);
 			policy.setLastUpdatedBy(userId);
+			policy.setOrganizationId(policyReq.getOrganizationId());
 			logger.info("Creating policy ....");
 			Policy createdPolicy = policyRepository.save(policy);
 			return DTOMapper.toPolicyDTO(createdPolicy);

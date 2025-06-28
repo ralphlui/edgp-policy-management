@@ -52,5 +52,8 @@ public class Policy {
 	@Column(nullable = false)
 	private String lastUpdatedBy;
 	
+	@Column(nullable = false)
+	private String organizationId;
+	
 	
 }

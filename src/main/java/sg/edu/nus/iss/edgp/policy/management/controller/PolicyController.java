@@ -51,7 +51,7 @@ public class PolicyController {
 		try {
 			String jwtToken = authorizationHeader.substring(7);
 			String userId = jwtService.extractSubject(jwtToken);
-			ValidationResult validationResult = policyValidationStrategy.validateCreation(policyRequest);
+			ValidationResult validationResult = policyValidationStrategy.validateCreation(policyRequest, authorizationHeader);
 
 			if (validationResult.isValid()) {
 				PolicyDTO policyDTO = policyService.createPolicy(policyRequest, userId);

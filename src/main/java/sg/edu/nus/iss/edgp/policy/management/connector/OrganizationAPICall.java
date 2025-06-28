@@ -12,35 +12,35 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AdminAPICall {
+public class OrganizationAPICall {
 
-	@Value("${admin.api.url}")
-	private String adminURL;
+	
+	@Value("${org.api.url}")
+	private String orgURL;
 
 	private static final Logger logger = LoggerFactory.getLogger(AdminAPICall.class);
-	private static final String GET_SPECIFIC_ACTIVE_USERS_EXCEPTION_MSG = "getSpecificActiveUsers exception occurred";
-
-	public String validateActiveUser(String userId, String authorizationHeader) {
-		logger.info("validate active user is calling ..");
+	
+	public String validateActiveOrganization(String orgId, String authorizationHeader) {
+		logger.info("org detail api is calling ..");
 		String responseStr = "";
 
 		try {
 			HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(30)).build();
 
-			String url = adminURL.trim() + "/users/profile";
+			String url = orgURL.trim() + "/my-organization";
 			logger.info(url);
 
 			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).timeout(Duration.ofSeconds(30))
-					.header("Authorization", authorizationHeader).header("X-User-Id", userId).header("Content-Type", "application/json")
+					.header("Authorization", authorizationHeader).header("X-Org-Id", orgId).header("Content-Type", "application/json")
 					.GET().build();
 
 			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 			responseStr = response.body();
 
-			logger.info("Active user detail response");
+			logger.info("Active org detail response.");
 
 		} catch (Exception e) {
-			logger.error(GET_SPECIFIC_ACTIVE_USERS_EXCEPTION_MSG, e);
+			logger.error("An error occurred while fetching organization data.", e);
 		}
 
 		return responseStr;

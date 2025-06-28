@@ -17,10 +17,9 @@ public class DTOMapper {
 		policyDTO.setDescription(policy.getDescription());
 		policyDTO.setPublished(policy.isPublished());
 		policyDTO.setCreatedBy(policy.getCreatedBy());
-		policyDTO.setCreatedDateTime(policy.getCreatedDateTime());
 		policyDTO.setLastUpdatedBy(policy.getLastUpdatedBy());
-		policyDTO.setLastUpdatedDateTime(policy.getLastUpdatedDateTime());
 		policyDTO.setRules(policy.getRules());
+		policyDTO.setOrganizationId(policy.getOrganizationId());
 		return policyDTO;
 	}
 }

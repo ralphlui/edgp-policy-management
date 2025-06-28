@@ -22,4 +22,5 @@ public class PolicyRequest {
 	private List<Rule> rules = new ArrayList<>();
 	private String createdBy;
 	private String lastUpdatedBy;
+	private String organizationId;
 }
