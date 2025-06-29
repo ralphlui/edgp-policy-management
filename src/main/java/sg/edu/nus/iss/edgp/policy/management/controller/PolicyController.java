@@ -93,7 +93,7 @@ public class PolicyController {
 			@RequestHeader("Authorization") String authorizationHeader,
 			@Valid @ModelAttribute SearchRequest searchRequest) {
 
-		logger.info("Call sector getAll API with page={}, size={}", searchRequest.getPage(), searchRequest.getSize());
+		logger.info("Call policy getAll API with page={}, size={}", searchRequest.getPage(), searchRequest.getSize());
 		String message = "";
 		String activityType = "Retrieve Policy List";
 		String endpoint = "/api/policy";
@@ -106,6 +106,12 @@ public class PolicyController {
 			Map<Long, List<PolicyDTO>> resultMap;
 			String jwtToken = authorizationHeader.substring(7);
 			String userOrgId = jwtService.extractOrgIdFromToken(jwtToken);
+			
+			if (userOrgId == null || userOrgId.isEmpty()) {
+				message = "Organization ID missing or invalid in token";
+				auditService.logAudit(auditDTO, 400, message, authorizationHeader);
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(APIResponse.error(message));
+			}
 			
 			
 			 if (searchRequest.getPage() == null) {

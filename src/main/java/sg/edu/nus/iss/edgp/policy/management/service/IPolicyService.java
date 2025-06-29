@@ -15,4 +15,6 @@ public interface IPolicyService {
 	Policy findByPolicyName(String policyName); 
 	
 	Map<Long, List<PolicyDTO>> retrievePaginatedPolicyList(Pageable pageable, Boolean isPublished, String orgId);
+	
+	Map<Long, List<PolicyDTO>> retrieveAllPolicyList(Boolean isPublished, String orgId);
 }
