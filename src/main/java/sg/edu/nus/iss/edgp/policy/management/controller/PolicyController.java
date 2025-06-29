@@ -1,22 +1,32 @@
 package sg.edu.nus.iss.edgp.policy.management.controller;
 
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import sg.edu.nus.iss.edgp.policy.management.dto.APIResponse;
 import sg.edu.nus.iss.edgp.policy.management.dto.AuditDTO;
 import sg.edu.nus.iss.edgp.policy.management.dto.PolicyDTO;
 import sg.edu.nus.iss.edgp.policy.management.dto.PolicyRequest;
+import sg.edu.nus.iss.edgp.policy.management.dto.SearchRequest;
 import sg.edu.nus.iss.edgp.policy.management.dto.ValidationResult;
 import sg.edu.nus.iss.edgp.policy.management.exception.PolicyServiceException;
 import sg.edu.nus.iss.edgp.policy.management.service.impl.AuditService;
@@ -75,5 +85,65 @@ public class PolicyController {
 		}
 
 	}
+	
+	
+	@GetMapping(value = "", produces = "application/json")
+	@PreAuthorize("hasAuthority('SCOPE_manage:policy') or hasAuthority('SCOPE_view:policy')")
+	public ResponseEntity<APIResponse<List<PolicyDTO>>> retrievePolicyList(
+			@RequestHeader("Authorization") String authorizationHeader,
+			@Valid @ModelAttribute SearchRequest searchRequest) {
+
+		logger.info("Call sector getAll API with page={}, size={}", searchRequest.getPage(), searchRequest.getSize());
+		String message = "";
+		String activityType = "Retrieve Policy List";
+		String endpoint = "/api/policy";
+		String httpMethod = HttpMethod.GET.name();
+		AuditDTO auditDTO = auditService.createAuditDTO(activityType, endpoint, httpMethod);
+
+
+		try {
+			
+			Map<Long, List<PolicyDTO>> resultMap;
+			String jwtToken = authorizationHeader.substring(7);
+			String userOrgId = jwtService.extractOrgIdFromToken(jwtToken);
+			
+			
+			 if (searchRequest.getPage() == null) {
+				 resultMap = policyService.retrieveAllPolicyList(searchRequest.getIsPublished(), userOrgId);
+					logger.info("all policy list size {}", resultMap.size());
+			 } else {
+				 Pageable pageable = PageRequest.of(searchRequest.getPage() - 1, searchRequest.getSize(),
+							Sort.by("policyName").ascending());
+				 resultMap = policyService.retrievePaginatedPolicyList(pageable, searchRequest.getIsPublished(), userOrgId);
+				 logger.info("all paginated policy list size {}", resultMap.size());
+			 }
+			
+
+			Map.Entry<Long, List<PolicyDTO>> firstEntry = resultMap.entrySet().iterator().next();
+			long totalRecord = firstEntry.getKey();
+			List<PolicyDTO> policyDTOList = firstEntry.getValue();
+
+			logger.info("totalRecord: {}", totalRecord);
+
+			if (!policyDTOList.isEmpty()) {
+				message = "Successfully retrieved all policy list.";
+				auditService.logAudit(auditDTO, 200, message, authorizationHeader);
+				return ResponseEntity.status(HttpStatus.OK)
+						.body(APIResponse.success(policyDTOList, message, totalRecord));
+
+			} else {
+				message = "No policy List.";
+				auditService.logAudit(auditDTO, 200, message, authorizationHeader);
+				return ResponseEntity.status(HttpStatus.OK)
+						.body(APIResponse.successWithEmptyData(policyDTOList, message));
+			}
+
+		} catch (Exception ex) {
+			message = ex instanceof PolicyServiceException ? ex.getMessage() : genericErrorMessage;
+			auditService.logAudit(auditDTO, 500, message, authorizationHeader);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(APIResponse.error(message));
+		}
+	}
+	
 
 }
