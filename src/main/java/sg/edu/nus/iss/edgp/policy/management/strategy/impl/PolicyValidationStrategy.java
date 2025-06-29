@@ -16,6 +16,7 @@ import sg.edu.nus.iss.edgp.policy.management.connector.OrganizationAPICall;
 import sg.edu.nus.iss.edgp.policy.management.dto.PolicyRequest;
 import sg.edu.nus.iss.edgp.policy.management.dto.ValidationResult;
 import sg.edu.nus.iss.edgp.policy.management.entity.Policy;
+import sg.edu.nus.iss.edgp.policy.management.service.impl.JwtService;
 import sg.edu.nus.iss.edgp.policy.management.service.impl.PolicyService;
 import sg.edu.nus.iss.edgp.policy.management.strategy.IAPIHelperValidationStrategy;
 import sg.edu.nus.iss.edgp.policy.management.utility.JSONReader;
@@ -28,6 +29,7 @@ public class PolicyValidationStrategy implements IAPIHelperValidationStrategy<Po
 	private final OrganizationAPICall orgAPICall;
 	private static final Logger logger = LoggerFactory.getLogger(PolicyValidationStrategy.class);
 	private final JSONReader jsonReader;
+	private final JwtService jwtService;
 
 	@Override
 	public ValidationResult validateCreation(PolicyRequest policyReq, String authorizationHeader) {
@@ -45,10 +47,13 @@ public class PolicyValidationStrategy implements IAPIHelperValidationStrategy<Po
 			missingFields.add("Organization ID");
 
 		if (!missingFields.isEmpty()) {
-			validationResult.setMessage(String.join(" and ", missingFields) + " is required");
-			validationResult.setStatus(HttpStatus.BAD_REQUEST);
-			validationResult.setValid(false);
-			return validationResult;
+			return buildInvalidResult(String.join(" and ", missingFields) + " is required");
+		}
+
+		String jwtToken = authorizationHeader.substring(7);
+		String userOrgId = jwtService.extractOrgIdFromToken(jwtToken);
+		if (!organizationId.equals(userOrgId)) {
+			return buildInvalidResult("Access Denied. Not authorized to create policy for this organization.");
 		}
 
 		Policy dbPolicy = policyService.findByPolicyName(policyReq.getPolicyName().trim());
@@ -61,15 +66,20 @@ public class PolicyValidationStrategy implements IAPIHelperValidationStrategy<Po
 
 		Boolean isActive = validateActiveOrganization(organizationId, authorizationHeader);
 		if (!isActive) {
-			validationResult.setValid(false);
-			validationResult.setStatus(HttpStatus.BAD_REQUEST);
-			validationResult.setMessage("Invalid organization. Unable to create policy.");
-			return validationResult;
+			return buildInvalidResult("Invalid organization. Unable to create policy.");
 		}
 
 		validationResult.setValid(true);
 
 		return validationResult;
+	}
+
+	private ValidationResult buildInvalidResult(String message) {
+		ValidationResult result = new ValidationResult();
+		result.setMessage(message);
+		result.setValid(false);
+		result.setStatus(HttpStatus.BAD_REQUEST);
+		return result;
 	}
 
 	private Boolean validateActiveOrganization(String orgId, String authHeader) {

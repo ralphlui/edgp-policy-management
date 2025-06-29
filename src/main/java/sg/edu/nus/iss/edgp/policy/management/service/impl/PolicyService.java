@@ -41,8 +41,8 @@ public class PolicyService implements IPolicyService {
 			throw new PolicyServiceException("An error occured while creating policy", ex);
 		}
 	}
-	
-	
+
+	@Override
 	public Policy findByPolicyName(String policyName) {
 		try {
 			return policyRepository.findByPolicyName(policyName);
