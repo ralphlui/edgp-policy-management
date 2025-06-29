@@ -188,5 +188,41 @@ public class PolicyController {
 		}
 	}
 	
+	
+	@GetMapping(value = "/my-policy", produces = "application/json")
+	@PreAuthorize("hasAuthority('SCOPE_manage:policy') or hasAuthority('SCOPE_view:policy')")
+	public ResponseEntity<APIResponse<PolicyDTO>> getPolicybyPolicyId(
+			@RequestHeader("Authorization") String authorizationHeader, @RequestHeader("X-Policy-Id") String policyId) {
+		logger.info("Call viewing poloicy detail by poloicy id...");
+		
+		String message = "";
+		String activityType = "Retrieve policy by policy id";
+		String endpoint = "/api/policy/my-policy";
+		String httpMethod = HttpMethod.GET.name();
+		AuditDTO auditDTO = auditService.createAuditDTO(activityType, endpoint, httpMethod);
+		
+		try {
+			
+			if (policyId.isEmpty()) {
+				message = "Bad Request: Policy id could not be blank.";
+				logger.error(message);
+				auditService.logAudit(auditDTO, 400, message, authorizationHeader);
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(APIResponse.error(message));
+			}
+			
+			PolicyDTO policyDTO = policyService.findByPolicyId(policyId);
+			message = policyDTO.getPolicyName() + " is found.";
+			logger.info(message);
+			auditService.logAudit(auditDTO, 200, message, authorizationHeader);
+			return ResponseEntity.status(HttpStatus.OK).body(APIResponse.success(policyDTO, message));
+			
+		} catch (Exception ex) {
+			message = ex instanceof PolicyServiceException ? ex.getMessage() : genericErrorMessage;
+			logger.error(message);
+			auditService.logAudit(auditDTO, 500, message, authorizationHeader);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(APIResponse.error(message));
+		}	
+	}
+	
 
 }
