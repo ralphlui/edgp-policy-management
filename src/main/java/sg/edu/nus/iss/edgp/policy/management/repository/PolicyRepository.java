@@ -1,6 +1,7 @@
 package sg.edu.nus.iss.edgp.policy.management.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,4 +20,6 @@ public interface PolicyRepository extends JpaRepository<Policy, String> {
 	Page<Policy> findPaginatedByOrganizationId(String orgId, Pageable pageable);
 	
 	List<Policy> findAllByIsPublishedAndOrganizationId(boolean isPublished, String organizationId);
+	
+	Optional<Policy>  findByPolicyId(String policyId);
 }

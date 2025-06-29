@@ -1,9 +1,11 @@
 package sg.edu.nus.iss.edgp.policy.management.service.impl;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,6 +121,43 @@ public class PolicyService implements IPolicyService {
 			throw new PolicyServiceException("An error occurred while retrieving all policy list", ex);
 
 		}
+	}
+
+	@Override
+	public PolicyDTO updatePolicy(PolicyRequest policyReq, String userId, String policyId) {
+		try {
+			Optional<Policy> policyResult = policyRepository.findByPolicyId(policyId);
+			if (!policyResult.isPresent()) {
+				throw new PolicyServiceException("No matching policy found");
+			}
+			Policy dPolicy = policyResult.get();
+			dPolicy.setDescription(policyReq.getDescription());
+			dPolicy.setLastUpdatedBy(userId);
+			dPolicy.setLastUpdatedDateTime(LocalDateTime.now());
+			dPolicy.setPublished(policyReq.isPublished());
+			logger.info("Updating Policy...");
+			Policy updatedPolicy = policyRepository.save(dPolicy);
+			logger.info("Policy is updated successfully.");
+			return DTOMapper.toPolicyDTO(updatedPolicy);
+		} catch (Exception ex) {
+			logger.error("Exception occurred while updating policy", ex);
+			throw new PolicyServiceException("An error occurred while updating policy", ex);
+		}
+	}
+	
+	public PolicyDTO findByPolicyId(String policyId) {
+		try {
+			Optional<Policy>  policy = policyRepository.findByPolicyId(policyId);
+			if (policy.isPresent()) {
+				return DTOMapper.toPolicyDTO(policy.get());
+			}
+			throw new PolicyServiceException("Unable to find policy by this id.");
+			
+		} catch (Exception e) {
+			logger.error("Exception occurred while searching fot the policy by policy id", e);
+			throw new PolicyServiceException("An error occurred while searching fot the policy by policy id", e);
+		}
+		
 	}
 
 }

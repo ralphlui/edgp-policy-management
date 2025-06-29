@@ -13,12 +13,14 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 import sg.edu.nus.iss.edgp.policy.management.connector.OrganizationAPICall;
+import sg.edu.nus.iss.edgp.policy.management.dto.PolicyDTO;
 import sg.edu.nus.iss.edgp.policy.management.dto.PolicyRequest;
 import sg.edu.nus.iss.edgp.policy.management.dto.ValidationResult;
 import sg.edu.nus.iss.edgp.policy.management.entity.Policy;
 import sg.edu.nus.iss.edgp.policy.management.service.impl.JwtService;
 import sg.edu.nus.iss.edgp.policy.management.service.impl.PolicyService;
 import sg.edu.nus.iss.edgp.policy.management.strategy.IAPIHelperValidationStrategy;
+import sg.edu.nus.iss.edgp.policy.management.utility.GeneralUtility;
 import sg.edu.nus.iss.edgp.policy.management.utility.JSONReader;
 
 @Service
@@ -71,6 +73,25 @@ public class PolicyValidationStrategy implements IAPIHelperValidationStrategy<Po
 
 		validationResult.setValid(true);
 
+		return validationResult;
+	}
+	
+	@Override
+	public ValidationResult validateUpdating(PolicyRequest policyReq) {
+		ValidationResult validationResult = new ValidationResult();
+
+		String policyId = GeneralUtility.makeNotNull(policyReq.getPolicyId());
+
+		if (policyId.isEmpty()) {
+			return buildInvalidResult("Bad Request: Policy ID could not be blank.");
+		}
+
+		PolicyDTO policyDTO = policyService.findByPolicyId(policyId);
+		if (policyDTO == null || policyDTO.getPolicyId().isEmpty()) {
+			return buildInvalidResult("Invalid policy ID.");
+		}
+
+		validationResult.setValid(true);
 		return validationResult;
 	}
 

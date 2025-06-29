@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -145,6 +146,42 @@ public class PolicyController {
 			}
 
 		} catch (Exception ex) {
+			message = ex instanceof PolicyServiceException ? ex.getMessage() : genericErrorMessage;
+			auditService.logAudit(auditDTO, 500, message, authorizationHeader);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(APIResponse.error(message));
+		}
+	}
+	
+	
+	@PutMapping(value = "", produces = "application/json")
+	@PreAuthorize("hasAuthority('SCOPE_manage:policy')")
+	public ResponseEntity<APIResponse<PolicyDTO>> updatePolicy(@RequestHeader("Authorization") String authorizationHeader,
+			@RequestHeader("X-Policy-Id") String policyId, @RequestBody PolicyRequest policyRequest) {
+		logger.info("Calling policy update API...");
+		String message = "";
+		String activityType = "Update policy";
+		String endpoint = "/api/policy";
+		String httpMethod = HttpMethod.PUT.name();
+		AuditDTO auditDTO = auditService.createAuditDTO(activityType, endpoint, httpMethod);
+		
+		try {
+			String jwtToken = authorizationHeader.substring(7);
+			String userId = jwtService.extractSubject(jwtToken);
+			policyRequest.setPolicyId(policyId);
+			ValidationResult validationResult = policyValidationStrategy.validateUpdating(policyRequest);
+			if (validationResult.isValid()) {
+				PolicyDTO policyDTO = policyService.updatePolicy(policyRequest, userId, policyId);
+				message = policyDTO.getPolicyName() + " is updated successfully.";
+				logger.info(message);
+				auditService.logAudit(auditDTO, 200, message, authorizationHeader);
+				return ResponseEntity.status(HttpStatus.OK).body(APIResponse.success(policyDTO, message));
+			}
+			message = validationResult.getMessage();
+			logger.error(message);
+			auditService.logAudit(auditDTO, validationResult.getStatus().value(), message, authorizationHeader);
+			return ResponseEntity.status(validationResult.getStatus()).body(APIResponse.error(message));
+			
+		} catch( Exception ex) {
 			message = ex instanceof PolicyServiceException ? ex.getMessage() : genericErrorMessage;
 			auditService.logAudit(auditDTO, 500, message, authorizationHeader);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(APIResponse.error(message));

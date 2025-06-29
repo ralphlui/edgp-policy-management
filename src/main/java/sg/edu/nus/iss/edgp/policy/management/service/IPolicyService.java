@@ -17,4 +17,6 @@ public interface IPolicyService {
 	Map<Long, List<PolicyDTO>> retrievePaginatedPolicyList(Pageable pageable, Boolean isPublished, String orgId);
 	
 	Map<Long, List<PolicyDTO>> retrieveAllPolicyList(Boolean isPublished, String orgId);
+	
+	PolicyDTO updatePolicy(PolicyRequest policyReq, String userId, String policyId);
 }
