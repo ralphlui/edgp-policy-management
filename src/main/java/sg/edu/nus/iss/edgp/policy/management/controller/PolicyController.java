@@ -211,6 +211,17 @@ public class PolicyController {
 			}
 			
 			PolicyDTO policyDTO = policyService.findByPolicyId(policyId);
+			
+			String jwtToken = authorizationHeader.substring(7);
+			String userOrgId = jwtService.extractOrgIdFromToken(jwtToken);
+			
+			if (!userOrgId.equals(policyDTO.getOrganizationId())) {
+				message = "Unauthorized to view this policy.";
+				logger.info(message);
+				auditService.logAudit(auditDTO, 401, message, authorizationHeader);
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(APIResponse.error(message));
+			}
+			
 			message = policyDTO.getPolicyName() + " is found.";
 			logger.info(message);
 			auditService.logAudit(auditDTO, 200, message, authorizationHeader);
