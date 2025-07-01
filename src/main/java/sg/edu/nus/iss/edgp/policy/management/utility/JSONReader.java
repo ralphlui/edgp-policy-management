@@ -2,6 +2,7 @@ package sg.edu.nus.iss.edgp.policy.management.utility;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -63,6 +64,13 @@ public class JSONReader {
 	public JSONObject getDataFromResponse(JSONObject jsonResponse) {
 		if (jsonResponse != null && !jsonResponse.isEmpty()) {
 			return (JSONObject) jsonResponse.get("data");
+		}
+		return null;
+	}
+	
+	public JSONArray getDataArrayFromResponse(JSONObject jsonResponse) {
+		if (jsonResponse != null && !jsonResponse.isEmpty()) {
+			return (JSONArray) jsonResponse.get("data");
 		}
 		return null;
 	}
