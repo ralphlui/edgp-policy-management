@@ -57,6 +57,8 @@ class PolicyControllerTest {
     private ObjectMapper objectMapper;
     
     private final String authorizationHeader = "Bearer dummy.jwt.token";
+    private final String token = "dummy.jwt.token";
+    private final String policyId = "POL123";
 
     @Test
     void testCreatePolicy_Success() throws Exception {
@@ -304,6 +306,65 @@ class PolicyControllerTest {
                 """)
         )
         .andExpect(status().isUnauthorized());
+    }
+    
+    
+    @Test
+    void testGetPolicyByPolicyId_Success() throws Exception {
+        PolicyDTO mockPolicy = new PolicyDTO();
+        mockPolicy.setPolicyId(policyId);
+        mockPolicy.setPolicyName("Health Policy");
+        mockPolicy.setOrganizationId("ORG001");
+
+        when(policyService.findByPolicyId(policyId)).thenReturn(mockPolicy);
+        when(jwtService.extractOrgIdFromToken(token)).thenReturn("ORG001");
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/policy/my-policy")
+                .header("Authorization", authorizationHeader)
+                .header("X-Policy-Id", policyId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.policyName").value("Health Policy"));
+    }
+
+    @Test
+    void testGetPolicyByPolicyId_BlankPolicyId_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/policy/my-policy")
+                .header("Authorization", authorizationHeader)
+                .header("X-Policy-Id", ""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Bad Request: Policy id could not be blank."));
+    }
+
+    @Test
+    void testGetPolicyByPolicyId_UnauthorizedOrgMismatch() throws Exception {
+        PolicyDTO mockPolicy = new PolicyDTO();
+        mockPolicy.setPolicyId(policyId);
+        mockPolicy.setPolicyName("Confidential Policy");
+        mockPolicy.setOrganizationId("ORG999"); // Does not match user
+
+        when(policyService.findByPolicyId(policyId)).thenReturn(mockPolicy);
+        when(jwtService.extractOrgIdFromToken(token)).thenReturn("ORG001");
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/policy/my-policy")
+                .header("Authorization", authorizationHeader)
+                .header("X-Policy-Id", policyId))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Unauthorized to view this policy."));
+    }
+
+    @Test
+    void testGetPolicyByPolicyId_InternalServerError() throws Exception {
+        when(policyService.findByPolicyId(policyId)).thenThrow(new PolicyServiceException("Unexpected error"));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/policy/my-policy")
+                .header("Authorization", authorizationHeader)
+                .header("X-Policy-Id", policyId))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Unexpected error"));
     }
 }
 
