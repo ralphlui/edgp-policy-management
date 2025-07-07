@@ -87,7 +87,7 @@ public class PolicyServiceTest {
 		savedPolicy.setOrganizationId("org-123");
 
 		expectedDto = new PolicyDTO();
-		expectedDto.setPolicyId("policy-1");
+		expectedDto.setPolicyId(policyId);
 		expectedDto.setPolicyName("Test Policy");
 		expectedDto.setDescription("Test Description");
 
@@ -99,7 +99,7 @@ public class PolicyServiceTest {
 		pageable = PageRequest.of(0, 10);
 
 		policyDTO = new PolicyDTO();
-		policyDTO.setPolicyId("policy-1");
+		policyDTO.setPolicyId(policyId);
 		policyDTO.setPolicyName("RetentionPolicy");
 		policyDTO.setDescription("Latest Descritpion");
 
@@ -176,7 +176,7 @@ public class PolicyServiceTest {
 			assertNotNull(result);
 			assertEquals(1, result.size());
 			assertEquals(1, result.entrySet().iterator().next().getValue().size());
-			assertEquals("policy-1", result.entrySet().iterator().next().getValue().get(0).getPolicyId());
+			assertEquals(policyId, result.entrySet().iterator().next().getValue().get(0).getPolicyId());
 		}
 	}
 
@@ -221,7 +221,7 @@ public class PolicyServiceTest {
 
 			assertNotNull(result);
 			assertEquals(1, result.size());
-			assertEquals("policy-1", result.values().iterator().next().get(0).getPolicyId());
+			assertEquals(policyId, result.values().iterator().next().get(0).getPolicyId());
 		}
 	}
 
@@ -275,5 +275,39 @@ public class PolicyServiceTest {
 		});
 
 		assertTrue(ex.getMessage().contains("An error occurred while updating policy"));
+	}
+
+	@Test
+	void testFindByPolicyId_success() {
+		when(policyRepository.findByPolicyId(policyId)).thenReturn(Optional.of(policy));
+
+		try (MockedStatic<DTOMapper> mockedMapper = mockStatic(DTOMapper.class)) {
+			mockedMapper.when(() -> DTOMapper.toPolicyDTO(policy)).thenReturn(policyDTO);
+
+			PolicyDTO result = policyService.findByPolicyId(policyId);
+
+			assertNotNull(result);
+			assertEquals(policyId, result.getPolicyId());
+		}
+	}
+
+	@Test
+	void testFindByPolicyId_policyNotFound() {
+		when(policyRepository.findByPolicyId(policyId)).thenReturn(Optional.empty());
+
+		PolicyServiceException ex = assertThrows(PolicyServiceException.class,
+				() -> policyService.findByPolicyId(policyId));
+
+		assertTrue(ex.getMessage().contains("An error occurred while searching fot the policy by policy id"));
+	}
+
+	@Test
+	void testFindByPolicyId_repositoryThrowsException() {
+		when(policyRepository.findByPolicyId(policyId)).thenThrow(new RuntimeException("DB error"));
+
+		PolicyServiceException ex = assertThrows(PolicyServiceException.class,
+				() -> policyService.findByPolicyId(policyId));
+
+		assertTrue(ex.getMessage().contains("An error occurred while searching fot the policy by policy id"));
 	}
 }
