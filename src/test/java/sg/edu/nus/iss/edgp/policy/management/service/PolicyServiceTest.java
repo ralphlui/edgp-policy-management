@@ -197,4 +197,46 @@ public class PolicyServiceTest {
 
 		assertTrue(exception.getMessage().contains("An error occurred while retrieving paginated policy list"));
 	}
+	
+	
+	@Test
+    void testRetrieveAllPolicyList_WithPublishedFilter() {
+        List<Policy> policies = List.of(policy);
+        when(policyRepository.findAllByIsPublishedAndOrganizationId(true, orgId)).thenReturn(policies);
+
+        try (MockedStatic<DTOMapper> mapper = mockStatic(DTOMapper.class)) {
+            mapper.when(() -> DTOMapper.toPolicyDTO(policy)).thenReturn(policyDTO);
+
+            Map<Long, List<PolicyDTO>> result = policyService.retrieveAllPolicyList(true, orgId);
+
+            assertNotNull(result);
+            assertEquals(1, result.size());
+            assertEquals("policy-1", result.values().iterator().next().get(0).getPolicyId());
+        }
+    }
+
+    @Test
+    void testRetrieveAllPolicyList_WithoutPublishedFilter() {
+        List<Policy> policies = List.of(policy);
+        when(policyRepository.findAllByOrganizationId(orgId)).thenReturn(policies);
+
+        try (MockedStatic<DTOMapper> mapper = mockStatic(DTOMapper.class)) {
+            mapper.when(() -> DTOMapper.toPolicyDTO(policy)).thenReturn(policyDTO);
+
+            Map<Long, List<PolicyDTO>> result = policyService.retrieveAllPolicyList(null, orgId);
+
+            assertNotNull(result);
+        }
+    }
+
+    @Test
+    void testRetrieveAllPolicyList_ThrowsException() {
+        when(policyRepository.findAllByOrganizationId(orgId)).thenThrow(new RuntimeException("DB issue"));
+
+        PolicyServiceException exception = assertThrows(PolicyServiceException.class, () ->
+            policyService.retrieveAllPolicyList(null, orgId)
+        );
+
+        assertTrue(exception.getMessage().contains("An error occurred while retrieving all policy list"));
+    }
 }
