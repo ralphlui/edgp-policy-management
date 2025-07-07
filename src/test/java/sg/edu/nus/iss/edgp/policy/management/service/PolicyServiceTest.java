@@ -42,6 +42,7 @@ public class PolicyServiceTest {
 	private Policy savedPolicy;
 	private PolicyDTO expectedDto;
 	private final String userId = "test-user";
+	private Policy policy;
 
 	@BeforeEach
 	void setup() {
@@ -81,6 +82,11 @@ public class PolicyServiceTest {
 		expectedDto.setPolicyId("policy-1");
 		expectedDto.setPolicyName("Test Policy");
 		expectedDto.setDescription("Test Description");
+		
+		policy = new Policy();
+        policy.setPolicyId("policy-1");
+        policy.setPolicyName("DataRetentionPolicy");
+        policy.setDescription("Test policy description");
 	}
 
 	@Test
@@ -109,4 +115,27 @@ public class PolicyServiceTest {
 
 		assertTrue(exception.getMessage().contains("An error occured while creating policy"));
 	}
+	
+    @Test
+    void testFindByPolicyName_success() {
+        when(policyRepository.findByPolicyName("DataRetentionPolicy")).thenReturn(policy);
+
+        Policy result = policyService.findByPolicyName("DataRetentionPolicy");
+
+        assertNotNull(result);
+        assertEquals("policy-1", result.getPolicyId());
+        assertEquals("DataRetentionPolicy", result.getPolicyName());
+        verify(policyRepository).findByPolicyName("DataRetentionPolicy");
+    }
+
+    @Test
+    void testFindByPolicyName_throwsException() {
+        when(policyRepository.findByPolicyName("DataRetentionPolicy")).thenThrow(new RuntimeException("DB error"));
+
+        Exception exception = assertThrows(PolicyServiceException.class, () -> {
+            policyService.findByPolicyName("DataRetentionPolicy");
+        });
+
+        assertTrue(exception.getMessage().contains("An error occurred while searching for the policy by name"));
+    }
 }
