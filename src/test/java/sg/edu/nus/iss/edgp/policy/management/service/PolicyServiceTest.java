@@ -12,6 +12,8 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.domain.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,6 +45,9 @@ public class PolicyServiceTest {
 	private PolicyDTO expectedDto;
 	private final String userId = "test-user";
 	private Policy policy;
+	private Pageable pageable;
+	private String orgId = "org-123";
+	private PolicyDTO policyDTO;
 
 	@BeforeEach
 	void setup() {
@@ -82,11 +87,17 @@ public class PolicyServiceTest {
 		expectedDto.setPolicyId("policy-1");
 		expectedDto.setPolicyName("Test Policy");
 		expectedDto.setDescription("Test Description");
-		
+
 		policy = new Policy();
-        policy.setPolicyId("policy-1");
-        policy.setPolicyName("DataRetentionPolicy");
-        policy.setDescription("Test policy description");
+		policy.setPolicyId("policy-1");
+		policy.setPolicyName("DataRetentionPolicy");
+		policy.setDescription("Test policy description");
+		
+		pageable = PageRequest.of(0, 10);
+		
+		policyDTO = new PolicyDTO();
+        policyDTO.setPolicyId("policy-1");
+        policyDTO.setPolicyName("RetentionPolicy");
 	}
 
 	@Test
@@ -115,27 +126,75 @@ public class PolicyServiceTest {
 
 		assertTrue(exception.getMessage().contains("An error occured while creating policy"));
 	}
-	
-    @Test
-    void testFindByPolicyName_success() {
-        when(policyRepository.findByPolicyName("DataRetentionPolicy")).thenReturn(policy);
 
-        Policy result = policyService.findByPolicyName("DataRetentionPolicy");
+	@Test
+	void testFindByPolicyName_success() {
+		when(policyRepository.findByPolicyName("DataRetentionPolicy")).thenReturn(policy);
 
-        assertNotNull(result);
-        assertEquals("policy-1", result.getPolicyId());
-        assertEquals("DataRetentionPolicy", result.getPolicyName());
-        verify(policyRepository).findByPolicyName("DataRetentionPolicy");
-    }
+		Policy result = policyService.findByPolicyName("DataRetentionPolicy");
 
-    @Test
-    void testFindByPolicyName_throwsException() {
-        when(policyRepository.findByPolicyName("DataRetentionPolicy")).thenThrow(new RuntimeException("DB error"));
+		assertNotNull(result);
+		assertEquals("policy-1", result.getPolicyId());
+		assertEquals("DataRetentionPolicy", result.getPolicyName());
+		verify(policyRepository).findByPolicyName("DataRetentionPolicy");
+	}
 
-        Exception exception = assertThrows(PolicyServiceException.class, () -> {
-            policyService.findByPolicyName("DataRetentionPolicy");
-        });
+	@Test
+	void testFindByPolicyName_throwsException() {
+		when(policyRepository.findByPolicyName("DataRetentionPolicy")).thenThrow(new RuntimeException("DB error"));
 
-        assertTrue(exception.getMessage().contains("An error occurred while searching for the policy by name"));
-    }
+		Exception exception = assertThrows(PolicyServiceException.class, () -> {
+			policyService.findByPolicyName("DataRetentionPolicy");
+		});
+
+		assertTrue(exception.getMessage().contains("An error occurred while searching for the policy by name"));
+	}
+
+	@Test
+	void testRetrievePaginatedPolicyList_WithPublishedFilter() {
+		List<Policy> policyList = List.of(policy);
+		Page<Policy> page = new PageImpl<>(policyList, pageable, 1);
+
+		when(policyRepository.findPaginatedByIsPublishedAndOrganizationId(true, orgId, pageable)).thenReturn(page);
+
+		try (MockedStatic<DTOMapper> mockedMapper = mockStatic(DTOMapper.class)) {
+			mockedMapper.when(() -> DTOMapper.toPolicyDTO(policy)).thenReturn(policyDTO);
+
+			Map<Long, List<PolicyDTO>> result = policyService.retrievePaginatedPolicyList(pageable, true, orgId);
+
+			assertNotNull(result);
+			assertEquals(1, result.size());
+			assertEquals(1, result.entrySet().iterator().next().getValue().size());
+			assertEquals("policy-1", result.entrySet().iterator().next().getValue().get(0).getPolicyId());
+		}
+	}
+
+	@Test
+	void testRetrievePaginatedPolicyList_WithoutPublishedFilter() {
+		List<Policy> policyList = List.of(policy);
+		Page<Policy> page = new PageImpl<>(policyList, pageable, 1);
+
+		when(policyRepository.findPaginatedByOrganizationId(orgId, pageable)).thenReturn(page);
+
+		try (MockedStatic<DTOMapper> mockedMapper = mockStatic(DTOMapper.class)) {
+			mockedMapper.when(() -> DTOMapper.toPolicyDTO(policy)).thenReturn(policyDTO);
+
+			Map<Long, List<PolicyDTO>> result = policyService.retrievePaginatedPolicyList(pageable, null, orgId);
+
+			assertNotNull(result);
+			assertEquals(1, result.size());
+		}
+	}
+
+	@Test
+	void testRetrievePaginatedPolicyList_ThrowsException() {
+		when(policyRepository.findPaginatedByOrganizationId(orgId, pageable))
+				.thenThrow(new RuntimeException("DB error"));
+
+		Exception exception = assertThrows(PolicyServiceException.class, () -> {
+			policyService.retrievePaginatedPolicyList(pageable, null, orgId);
+		});
+
+		assertTrue(exception.getMessage().contains("An error occurred while retrieving paginated policy list"));
+	}
 }
