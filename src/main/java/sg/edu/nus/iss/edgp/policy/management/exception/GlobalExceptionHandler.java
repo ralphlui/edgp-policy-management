@@ -28,7 +28,7 @@ public class GlobalExceptionHandler {
 	@SuppressWarnings("rawtypes")
 	@ExceptionHandler(Exception.class)
 	@ResponseBody
-	ResponseEntity<APIResponse> handleObjectNotFoundException(Exception ex){
+	public ResponseEntity<APIResponse> handleObjectNotFoundException(Exception ex){
 		String message = "Failed to get data. " + ex.getMessage();
 		 logger.error(message);
 		  return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
