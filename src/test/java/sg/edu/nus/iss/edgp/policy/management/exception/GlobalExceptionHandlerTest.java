@@ -13,8 +13,6 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import sg.edu.nus.iss.edgp.policy.management.dto.APIResponse;
-import sg.edu.nus.iss.edgp.policy.management.exception.GlobalExceptionHandler;
-import sg.edu.nus.iss.edgp.policy.management.exception.PolicyNotFoundException;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
