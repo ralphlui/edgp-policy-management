@@ -2,6 +2,7 @@ package sg.edu.nus.iss.edgp.policy.management.strategy.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -93,6 +94,43 @@ public class PolicyValidationStrategy implements IAPIHelperValidationStrategy<Po
 
 		validationResult.setValid(true);
 		return validationResult;
+	}
+	
+	public ValidationResult isUserOrganizationActive(String userOrgId, String authHeader) {
+	    return validateActive(userOrgId, authHeader);
+	}
+
+	public ValidationResult isUserOrganizationValidAndActive(String orgId, String userOrgId, String authHeader) {
+	   
+	    ValidationResult activeCheck = validateActive(userOrgId, authHeader);
+	    if (!activeCheck.isValid()) return activeCheck;
+
+	    if (!Objects.equals(userOrgId, orgId)) {
+	        return buildInvalidResult("Unauthorized to view this policy.");
+	    }
+
+	    return activeCheck; 
+	}
+
+	
+	private ValidationResult validateActive(String userOrgId, String authHeader) {
+	    if (isBlank(userOrgId)) {
+	        return buildInvalidResult("Organization ID missing or invalid in token");
+	    }
+
+	    boolean isActive = Boolean.TRUE.equals(validateActiveOrganization(userOrgId, authHeader));
+	    if (!isActive) {
+	        return buildInvalidResult("Invalid organization. Unable to view policy.");
+	    }
+
+	    ValidationResult validationResult = new ValidationResult();
+	    validationResult.setValid(true);
+	    return validationResult;
+	}
+
+	/** Tiny utility (avoids external deps). */
+	private boolean isBlank(String s) {
+	    return s == null || s.trim().isEmpty();
 	}
 
 	private ValidationResult buildInvalidResult(String message) {

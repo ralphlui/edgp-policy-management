@@ -107,9 +107,11 @@ public class PolicyController {
 			Map<Long, List<PolicyDTO>> resultMap;
 			String jwtToken = authorizationHeader.substring(7);
 			String userOrgId = jwtService.extractOrgIdFromToken(jwtToken);
+            ValidationResult validationResult = policyValidationStrategy.isUserOrganizationActive(userOrgId, authorizationHeader);
 			
-			if (userOrgId == null || userOrgId.isEmpty()) {
-				message = "Organization ID missing or invalid in token";
+				
+			if (!validationResult.isValid()) {
+				message = validationResult.getMessage();
 				auditService.logAudit(auditDTO, 400, message, authorizationHeader);
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(APIResponse.error(message));
 			}
@@ -214,15 +216,17 @@ public class PolicyController {
 			
 			String jwtToken = authorizationHeader.substring(7);
 			String userOrgId = jwtService.extractOrgIdFromToken(jwtToken);
+		    ValidationResult validationResult = policyValidationStrategy.isUserOrganizationValidAndActive(policyDTO.getOrganizationId(), userOrgId, authorizationHeader);
+				
 			
-			if (!userOrgId.equals(policyDTO.getOrganizationId())) {
+			if (!validationResult.isValid()) {
 				message = "Unauthorized to view this policy.";
 				logger.info(message);
 				auditService.logAudit(auditDTO, 401, message, authorizationHeader);
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(APIResponse.error(message));
 			}
 			
-			message = policyDTO.getPolicyName() + " is found.";
+			message = "Requested policy is available.";
 			logger.info(message);
 			auditService.logAudit(auditDTO, 200, message, authorizationHeader);
 			return ResponseEntity.status(HttpStatus.OK).body(APIResponse.success(policyDTO, message));
