@@ -72,7 +72,7 @@ class PolicyControllerTest {
 		validationResult.setValid(true);
 
 		when(jwtService.extractSubject(jwtToken)).thenReturn(userId);
-		when(policyValidationStrategy.validateCreation(any(), eq(authHeader))).thenReturn(validationResult);
+		when(policyValidationStrategy.validateCreation(any(), eq(authHeader), any())).thenReturn(validationResult);
 		when(policyService.createPolicy(any(), eq(userId))).thenReturn(policyDTO);
 
 		// Perform the request
@@ -95,7 +95,7 @@ class PolicyControllerTest {
 		validationResult.setStatus(HttpStatus.BAD_REQUEST);
 
 		when(jwtService.extractSubject(jwtToken)).thenReturn("user-123");
-		when(policyValidationStrategy.validateCreation(any(), eq(authHeader))).thenReturn(validationResult);
+		when(policyValidationStrategy.validateCreation(any(), eq(authHeader), any())).thenReturn(validationResult);
 
 		mockMvc.perform(post("/api/policy").header("Authorization", authHeader).contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(policyRequest))).andExpect(status().isBadRequest())
@@ -109,7 +109,7 @@ class PolicyControllerTest {
 		String authHeader = "Bearer " + jwtToken;
 
 		when(jwtService.extractSubject(jwtToken)).thenReturn("user-123");
-		when(policyValidationStrategy.validateCreation(any(), eq(authHeader)))
+		when(policyValidationStrategy.validateCreation(any(), eq(authHeader), any()))
 				.thenThrow(new PolicyServiceException("Unexpected error"));
 
 		mockMvc.perform(post("/api/policy").header("Authorization", authHeader).contentType(MediaType.APPLICATION_JSON)

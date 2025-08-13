@@ -43,35 +43,21 @@ public class PolicyValidationStrategyTest {
 	private JwtService jwtService;
 
 	private static final String AUTH_HEADER = "Bearer dummy.jwt.token";
+	private String userOrgId = "org123";
 
 	@BeforeEach
 	public void setup() {
-		validationStrategy = new PolicyValidationStrategy(policyService, orgAPICall, jsonReader, jwtService);
+		validationStrategy = new PolicyValidationStrategy(policyService, orgAPICall, jsonReader);
 	}
 
 	@Test
 	public void testValidateCreation_MissingFields() {
 		PolicyRequest request = new PolicyRequest(); // all nulls
 
-		ValidationResult result = validationStrategy.validateCreation(request, AUTH_HEADER);
+		ValidationResult result = validationStrategy.validateCreation(request, AUTH_HEADER, userOrgId);
 
 		assertFalse(result.isValid());
-		assertEquals("Policy name and Domain name and Organization ID is required", result.getMessage());
-	}
-
-	@Test
-	public void testValidateCreation_InvalidOrganizationId() {
-		PolicyRequest request = new PolicyRequest();
-		request.setPolicyName("TestPolicy");
-		request.setDomainName("DomainA");
-		request.setOrganizationId("org123");
-
-		when(jwtService.extractOrgIdFromToken("dummy.jwt.token")).thenReturn("org456");
-
-		ValidationResult result = validationStrategy.validateCreation(request, AUTH_HEADER);
-
-		assertFalse(result.isValid());
-		assertEquals("Access Denied. Not authorized to create policy for this organization.", result.getMessage());
+		assertEquals("Policy name and Domain name is required", result.getMessage());
 	}
 
 	@Test
@@ -79,12 +65,10 @@ public class PolicyValidationStrategyTest {
 		PolicyRequest request = new PolicyRequest();
 		request.setPolicyName("TestPolicy");
 		request.setDomainName("DomainA");
-		request.setOrganizationId("org123");
 
-		when(jwtService.extractOrgIdFromToken("dummy.jwt.token")).thenReturn("org123");
 		when(policyService.findByPolicyName("TestPolicy")).thenReturn(new Policy());
 
-		ValidationResult result = validationStrategy.validateCreation(request, AUTH_HEADER);
+		ValidationResult result = validationStrategy.validateCreation(request, AUTH_HEADER, userOrgId);
 
 		assertFalse(result.isValid());
 		assertEquals("Duplicate policy detected. Please enter a unique name.", result.getMessage());
@@ -95,9 +79,7 @@ public class PolicyValidationStrategyTest {
 		PolicyRequest request = new PolicyRequest();
 		request.setPolicyName("TestPolicy");
 		request.setDomainName("DomainA");
-		request.setOrganizationId("org123");
 
-		when(jwtService.extractOrgIdFromToken("dummy.jwt.token")).thenReturn("org123");
 		when(policyService.findByPolicyName("TestPolicy")).thenReturn(null);
 		when(orgAPICall.validateActiveOrganization(any(), any()))
 				.thenReturn("{\"success\":true,\"data\":{\"active\":false}}");
@@ -111,7 +93,7 @@ public class PolicyValidationStrategyTest {
 		when(jsonReader.getSuccessFromResponse(any())).thenReturn(true);
 		when(jsonReader.getDataFromResponse(any())).thenReturn(data);
 
-		ValidationResult result = validationStrategy.validateCreation(request, AUTH_HEADER);
+		ValidationResult result = validationStrategy.validateCreation(request, AUTH_HEADER, userOrgId);
 
 		assertFalse(result.isValid());
 		assertEquals("Invalid organization. Unable to create policy.", result.getMessage());
@@ -122,9 +104,7 @@ public class PolicyValidationStrategyTest {
 		PolicyRequest request = new PolicyRequest();
 		request.setPolicyName("TestPolicy");
 		request.setDomainName("DomainA");
-		request.setOrganizationId("org123");
 
-		when(jwtService.extractOrgIdFromToken("dummy.jwt.token")).thenReturn("org123");
 		when(policyService.findByPolicyName("TestPolicy")).thenReturn(null);
 		when(orgAPICall.validateActiveOrganization(any(), any()))
 				.thenReturn("{\"success\":true,\"data\":{\"active\":true}}");
@@ -138,7 +118,7 @@ public class PolicyValidationStrategyTest {
 		when(jsonReader.getSuccessFromResponse(any())).thenReturn(true);
 		when(jsonReader.getDataFromResponse(any())).thenReturn(data);
 
-		ValidationResult result = validationStrategy.validateCreation(request, AUTH_HEADER);
+		ValidationResult result = validationStrategy.validateCreation(request, AUTH_HEADER, userOrgId);
 
 		assertTrue(result.isValid());
 	}

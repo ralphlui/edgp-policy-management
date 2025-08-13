@@ -62,9 +62,12 @@ public class PolicyController {
 		try {
 			String jwtToken = authorizationHeader.substring(7);
 			String userId = jwtService.extractSubject(jwtToken);
-			ValidationResult validationResult = policyValidationStrategy.validateCreation(policyRequest, authorizationHeader);
+			String userOrgId = jwtService.extractOrgIdFromToken(jwtToken);
+			ValidationResult validationResult = policyValidationStrategy.validateCreation(policyRequest, authorizationHeader, userOrgId);
 
 			if (validationResult.isValid()) {
+	
+				policyRequest.setOrganizationId(userOrgId);
 				PolicyDTO policyDTO = policyService.createPolicy(policyRequest, userId);
 				message = "Success! The new policy has been added.";
 				logger.info(message);
