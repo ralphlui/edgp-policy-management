@@ -27,4 +27,4 @@ RUN keytool -importcert \
 # Expose the port that the Spring Boot application is listening on
 EXPOSE 8089
 # Run the Spring Boot application when the container starts
-CMD ["java", "-jar", "edgp-org-management-0.0.1-SNAPSHOT.jar"]
+CMD ["java", "-jar", "edgp-policy-management-0.0.1-SNAPSHOT.jar"]
