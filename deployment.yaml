@@ -44,11 +44,11 @@ spec:
                 configMapKeyRef:
                   name: my-configmap
                   key: ADMIN_URL
-            - name: ORG_URL
+            - name: ORGANIZATION_URL
               valueFrom:
                 configMapKeyRef:
                   name: my-configmap
-                  key: ORG_URL
+                  key: ORGANIZATION_URL
             - name: aws_access_key_id
               valueFrom:
                 secretKeyRef:
