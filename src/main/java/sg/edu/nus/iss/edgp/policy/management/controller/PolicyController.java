@@ -121,12 +121,12 @@ public class PolicyController {
 			
 			
 			 if (searchRequest.getPage() == null) {
-				 resultMap = policyService.retrieveAllPolicyList(searchRequest.getIsPublished(), userOrgId);
+				 resultMap = policyService.retrieveAllPolicyList(searchRequest, userOrgId);
 					logger.info("all policy list size {}", resultMap.size());
 			 } else {
 				 Pageable pageable = PageRequest.of(searchRequest.getPage() - 1, searchRequest.getSize(),
 							Sort.by("policyName").ascending());
-				 resultMap = policyService.retrievePaginatedPolicyList(pageable, searchRequest.getIsPublished(), userOrgId);
+				 resultMap = policyService.retrievePaginatedPolicyList(pageable, searchRequest, userOrgId);
 				 logger.info("all paginated policy list size {}", resultMap.size());
 			 }
 			

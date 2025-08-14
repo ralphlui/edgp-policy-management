@@ -6,6 +6,7 @@ import java.util.Map;
 
 import sg.edu.nus.iss.edgp.policy.management.dto.PolicyDTO;
 import sg.edu.nus.iss.edgp.policy.management.dto.PolicyRequest;
+import sg.edu.nus.iss.edgp.policy.management.dto.SearchRequest;
 import sg.edu.nus.iss.edgp.policy.management.entity.Policy;
 
 public interface IPolicyService {
@@ -14,9 +15,9 @@ public interface IPolicyService {
 	
 	Policy findByPolicyName(String policyName); 
 	
-	Map<Long, List<PolicyDTO>> retrievePaginatedPolicyList(Pageable pageable, Boolean isPublished, String orgId);
+	Map<Long, List<PolicyDTO>> retrievePaginatedPolicyList(Pageable pageable, SearchRequest searchRequest, String orgId);
 	
-	Map<Long, List<PolicyDTO>> retrieveAllPolicyList(Boolean isPublished, String orgId);
+	Map<Long, List<PolicyDTO>> retrieveAllPolicyList(SearchRequest searchRequest, String orgId);
 	
 	PolicyDTO updatePolicy(PolicyRequest policyReq, String userId, String policyId);
 }

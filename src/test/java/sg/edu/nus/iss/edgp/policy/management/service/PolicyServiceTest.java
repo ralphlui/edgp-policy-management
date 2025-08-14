@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import sg.edu.nus.iss.edgp.policy.management.dto.PolicyDTO;
 import sg.edu.nus.iss.edgp.policy.management.dto.PolicyRequest;
+import sg.edu.nus.iss.edgp.policy.management.dto.SearchRequest;
 import sg.edu.nus.iss.edgp.policy.management.entity.Policy;
 import sg.edu.nus.iss.edgp.policy.management.entity.Rule;
 import sg.edu.nus.iss.edgp.policy.management.exception.PolicyServiceException;
@@ -51,6 +52,7 @@ public class PolicyServiceTest {
 	private PolicyDTO policyDTO;
 	private Policy updatedPolicy;
 	private final String policyId = "policy-123";
+	private final SearchRequest searchRequest = new SearchRequest();
 
 	@BeforeEach
 	void setup() {
@@ -165,13 +167,14 @@ public class PolicyServiceTest {
 	void testRetrievePaginatedPolicyList_WithPublishedFilter() {
 		List<Policy> policyList = List.of(policy);
 		Page<Policy> page = new PageImpl<>(policyList, pageable, 1);
+		searchRequest.setIsPublished(true);
 
 		when(policyRepository.findPaginatedByIsPublishedAndOrganizationId(true, orgId, pageable)).thenReturn(page);
 
 		try (MockedStatic<DTOMapper> mockedMapper = mockStatic(DTOMapper.class)) {
 			mockedMapper.when(() -> DTOMapper.toPolicyDTO(policy)).thenReturn(policyDTO);
 
-			Map<Long, List<PolicyDTO>> result = policyService.retrievePaginatedPolicyList(pageable, true, orgId);
+			Map<Long, List<PolicyDTO>> result = policyService.retrievePaginatedPolicyList(pageable, searchRequest, orgId);
 
 			assertNotNull(result);
 			assertEquals(1, result.size());
@@ -189,8 +192,9 @@ public class PolicyServiceTest {
 
 		try (MockedStatic<DTOMapper> mockedMapper = mockStatic(DTOMapper.class)) {
 			mockedMapper.when(() -> DTOMapper.toPolicyDTO(policy)).thenReturn(policyDTO);
-
-			Map<Long, List<PolicyDTO>> result = policyService.retrievePaginatedPolicyList(pageable, null, orgId);
+			
+			SearchRequest searchRequest = new SearchRequest();
+			Map<Long, List<PolicyDTO>> result = policyService.retrievePaginatedPolicyList(pageable, searchRequest, orgId);
 
 			assertNotNull(result);
 			assertEquals(1, result.size());
@@ -203,7 +207,7 @@ public class PolicyServiceTest {
 				.thenThrow(new RuntimeException("DB error"));
 
 		Exception exception = assertThrows(PolicyServiceException.class, () -> {
-			policyService.retrievePaginatedPolicyList(pageable, null, orgId);
+			policyService.retrievePaginatedPolicyList(pageable, searchRequest, orgId);
 		});
 
 		assertTrue(exception.getMessage().contains("An error occurred while retrieving paginated policy list"));
@@ -217,7 +221,8 @@ public class PolicyServiceTest {
 		try (MockedStatic<DTOMapper> mapper = mockStatic(DTOMapper.class)) {
 			mapper.when(() -> DTOMapper.toPolicyDTO(policy)).thenReturn(policyDTO);
 
-			Map<Long, List<PolicyDTO>> result = policyService.retrieveAllPolicyList(true, orgId);
+			searchRequest.setIsPublished(true);
+			Map<Long, List<PolicyDTO>> result = policyService.retrieveAllPolicyList(searchRequest, orgId);
 
 			assertNotNull(result);
 			assertEquals(1, result.size());
@@ -233,7 +238,7 @@ public class PolicyServiceTest {
 		try (MockedStatic<DTOMapper> mapper = mockStatic(DTOMapper.class)) {
 			mapper.when(() -> DTOMapper.toPolicyDTO(policy)).thenReturn(policyDTO);
 
-			Map<Long, List<PolicyDTO>> result = policyService.retrieveAllPolicyList(null, orgId);
+			Map<Long, List<PolicyDTO>> result = policyService.retrieveAllPolicyList(searchRequest, orgId);
 
 			assertNotNull(result);
 		}
@@ -244,7 +249,7 @@ public class PolicyServiceTest {
 		when(policyRepository.findAllByOrganizationId(orgId)).thenThrow(new RuntimeException("DB issue"));
 
 		PolicyServiceException exception = assertThrows(PolicyServiceException.class,
-				() -> policyService.retrieveAllPolicyList(null, orgId));
+				() -> policyService.retrieveAllPolicyList(searchRequest, orgId));
 
 		assertTrue(exception.getMessage().contains("An error occurred while retrieving all policy list"));
 	}
