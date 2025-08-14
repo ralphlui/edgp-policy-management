@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import sg.edu.nus.iss.edgp.policy.management.dto.PolicyDTO;
 import sg.edu.nus.iss.edgp.policy.management.dto.PolicyRequest;
+import sg.edu.nus.iss.edgp.policy.management.dto.SearchRequest;
 import sg.edu.nus.iss.edgp.policy.management.entity.Policy;
 import sg.edu.nus.iss.edgp.policy.management.exception.PolicyServiceException;
 import sg.edu.nus.iss.edgp.policy.management.repository.PolicyRepository;
@@ -63,16 +64,23 @@ public class PolicyService implements IPolicyService {
 	}
 
 	@Override
-	public Map<Long, List<PolicyDTO>> retrievePaginatedPolicyList(Pageable pageable, Boolean isPublished,
+	public Map<Long, List<PolicyDTO>> retrievePaginatedPolicyList(Pageable pageable, SearchRequest searchRequest,
 			String orgId) {
 		try {
 			List<PolicyDTO> policyDTOList = new ArrayList<>();
 			Page<Policy> policyPages;
-			if (isPublished == null) {
-				policyPages = policyRepository.findPaginatedByOrganizationId(orgId, pageable);
-			} else {
+			Boolean isPublished = searchRequest.getIsPublished();
+			String domainName = searchRequest.getDomainName();
+
+			if (domainName != null) {
+				boolean publishedStatus = isPublished != null ? isPublished : true;
+				policyPages = policyRepository.findPaginatedByOrganizationIdAndDomainNameAndIsPublished(orgId, domainName,
+						publishedStatus, pageable);
+			} else if (isPublished != null) {
 				policyPages = policyRepository.findPaginatedByIsPublishedAndOrganizationId(isPublished, orgId,
 						pageable);
+			} else {
+				policyPages = policyRepository.findPaginatedByOrganizationId(orgId, pageable);
 			}
 
 			long totalRecord = policyPages.getTotalElements();
@@ -95,14 +103,21 @@ public class PolicyService implements IPolicyService {
 	}
 
 	@Override
-	public Map<Long, List<PolicyDTO>> retrieveAllPolicyList(Boolean isPublished, String orgId) {
+	public Map<Long, List<PolicyDTO>> retrieveAllPolicyList(SearchRequest searchRequest, String orgId) {
 		try {
-			 List<Policy> dbPolicyList;
-			if (isPublished == null) {
-	            dbPolicyList = policyRepository.findAllByOrganizationId(orgId);
-	        } else {
-	            dbPolicyList = policyRepository.findAllByIsPublishedAndOrganizationId(isPublished, orgId);
-	        }
+			List<Policy> dbPolicyList = new ArrayList<>();
+			Boolean isPublished = searchRequest.getIsPublished();
+			String domainName = searchRequest.getDomainName();
+
+			if (domainName != null) {
+				boolean publishedStatus = isPublished != null ? isPublished : true;
+				dbPolicyList = policyRepository.findAllByIsPublishedAndOrganizationIdAndDomainName(publishedStatus, orgId,
+						domainName);
+			} else if (isPublished != null) {
+				dbPolicyList = policyRepository.findAllByIsPublishedAndOrganizationId(isPublished, orgId);
+			} else {
+				dbPolicyList = policyRepository.findAllByOrganizationId(orgId);
+			}
 			long totalRecord = dbPolicyList.size();
 			List<PolicyDTO> policyDTOList = new ArrayList<>();
 			if (totalRecord > 0) {
@@ -144,20 +159,20 @@ public class PolicyService implements IPolicyService {
 			throw new PolicyServiceException("An error occurred while updating policy", ex);
 		}
 	}
-	
+
 	public PolicyDTO findByPolicyId(String policyId) {
 		try {
-			Optional<Policy>  policy = policyRepository.findByPolicyId(policyId);
+			Optional<Policy> policy = policyRepository.findByPolicyId(policyId);
 			if (policy.isPresent()) {
 				return DTOMapper.toPolicyDTO(policy.get());
 			}
 			throw new PolicyServiceException("Unable to find policy by this id.");
-			
+
 		} catch (Exception e) {
 			logger.error("Exception occurred while searching fot the policy by policy id", e);
 			throw new PolicyServiceException("An error occurred while searching fot the policy by policy id", e);
 		}
-		
+
 	}
 
 }

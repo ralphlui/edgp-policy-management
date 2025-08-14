@@ -15,5 +15,7 @@ public class SearchRequest {
 	private Integer size;
 	
 	private Boolean isPublished; 
+	
+	private String domainName;
 
 }
