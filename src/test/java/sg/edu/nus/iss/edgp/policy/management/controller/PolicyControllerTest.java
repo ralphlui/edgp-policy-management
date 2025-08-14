@@ -169,8 +169,6 @@ class PolicyControllerTest {
 		when(policyValidationStrategy.isUserOrganizationActive("org123", authorizationHeader))
 				.thenReturn(validationResult);
 
-		searchRequest.setIsPublished(true);
-		searchRequest.setDomainName("Customer");
 		when(policyService.retrieveAllPolicyList(any(SearchRequest.class), eq("org123"))).thenReturn(Map.of(0L, List.of()));
 
 		mockMvc.perform(MockMvcRequestBuilders.get("/api/policy").
