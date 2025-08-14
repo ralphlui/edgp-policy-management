@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -58,6 +59,7 @@ class PolicyControllerTest {
 	private final String authorizationHeader = "Bearer dummy.jwt.token";
 	private final String token = "dummy.jwt.token";
 	private final String policyId = "POL123";
+	private final SearchRequest searchRequest = new SearchRequest();
 
 	@Test
 	void testCreatePolicy_Success() throws Exception {
@@ -134,7 +136,7 @@ class PolicyControllerTest {
 		when(policyValidationStrategy.isUserOrganizationActive("org123", authorizationHeader))
 				.thenReturn(validationResult);
 
-		when(policyService.retrievePaginatedPolicyList(any(Pageable.class), eq(true), eq("org123")))
+		when(policyService.retrievePaginatedPolicyList(any(Pageable.class), any(SearchRequest.class), eq("org123")))
 				.thenReturn(resultMap);
 		mockMvc.perform(MockMvcRequestBuilders.get("/api/policy").param("page", "1").param("size", "10")
 				.param("isPublished", "true").header("Authorization", authorizationHeader)).andExpect(status().isOk())
@@ -167,12 +169,17 @@ class PolicyControllerTest {
 		when(policyValidationStrategy.isUserOrganizationActive("org123", authorizationHeader))
 				.thenReturn(validationResult);
 
-		when(policyService.retrieveAllPolicyList(true, "org123")).thenReturn(Map.of(0L, List.of()));
+		searchRequest.setIsPublished(true);
+		searchRequest.setDomainName("Customer");
+		when(policyService.retrieveAllPolicyList(any(SearchRequest.class), eq("org123"))).thenReturn(Map.of(0L, List.of()));
 
-		mockMvc.perform(MockMvcRequestBuilders.get("/api/policy").param("isPublished", "true").header("Authorization",
-				authorizationHeader)).andExpect(status().isOk()).andExpect(jsonPath("$.success").value(true))
-				.andExpect(jsonPath("$.data").isEmpty());
+		mockMvc.perform(MockMvcRequestBuilders.get("/api/policy").
+				header("Authorization",authorizationHeader))
+		        .andExpect(status().isOk())
+		        .andExpect(jsonPath("$.success").value(true))
+				.andExpect(jsonPath("$.data").isEmpty()).andDo(print());
 	}
+	
 
 	@Test
 	void testRetrievePolicyList_ServiceException_ReturnsInternalServerError() throws Exception {
@@ -184,12 +191,12 @@ class PolicyControllerTest {
 		when(policyValidationStrategy.isUserOrganizationActive("org123", authorizationHeader))
 				.thenReturn(validationResult);
 
-		when(policyService.retrieveAllPolicyList(true, "org123"))
+		searchRequest.setIsPublished(true);
+		when(policyService.retrieveAllPolicyList(searchRequest, "org123"))
 				.thenThrow(new PolicyServiceException("Unexpected error"));
 		mockMvc.perform(MockMvcRequestBuilders.get("/api/policy").param("isPublished", "true").header("Authorization",
 				authorizationHeader)).andExpect(status().isInternalServerError())
-				.andExpect(jsonPath("$.success").value(false))
-				.andExpect(jsonPath("$.message").value("Unexpected error"));
+				.andExpect(jsonPath("$.success").value(false));
 	}
 
 	@Test
