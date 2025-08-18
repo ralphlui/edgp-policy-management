@@ -25,9 +25,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import sg.edu.nus.iss.edgp.policy.management.dto.PolicyDTO;
 import sg.edu.nus.iss.edgp.policy.management.dto.PolicyRequest;
+import sg.edu.nus.iss.edgp.policy.management.dto.Rule;
 import sg.edu.nus.iss.edgp.policy.management.dto.SearchRequest;
+import sg.edu.nus.iss.edgp.policy.management.entity.AppliedRule;
 import sg.edu.nus.iss.edgp.policy.management.entity.Policy;
-import sg.edu.nus.iss.edgp.policy.management.entity.Rule;
 import sg.edu.nus.iss.edgp.policy.management.exception.PolicyServiceException;
 import sg.edu.nus.iss.edgp.policy.management.repository.PolicyRepository;
 import sg.edu.nus.iss.edgp.policy.management.service.impl.PolicyService;
@@ -57,17 +58,29 @@ public class PolicyServiceTest {
 	@BeforeEach
 	void setup() {
 
+		AppliedRule appliedRule1 = new AppliedRule();
+		appliedRule1.setRuleName("Rule1");
+		appliedRule1.setAppliesToField("field1");
+		appliedRule1.setDescription("Description 1");
+		appliedRule1.setParameters(Map.of("min", 1, "max", 10));
+
+		AppliedRule appliedRule2 = new AppliedRule();
+		appliedRule2.setRuleName("Rule2");
+		appliedRule2.setAppliesToField("field2");
+		appliedRule2.setDescription("Description 2");
+		appliedRule2.setParameters(Map.of("pattern", "[a-z]+"));
+		
 		Rule rule1 = new Rule();
-		rule1.setRuleName("Rule1");
-		rule1.setAppliesToField("field1");
-		rule1.setDescription("Description 1");
-		rule1.setParameters(Map.of("min", 1, "max", 10));
+		appliedRule1.setRuleName("Rule1");
+		appliedRule1.setAppliesToField("field1");
+		appliedRule1.setDescription("Description 1");
+		appliedRule1.setParameters(Map.of("min", 1, "max", 10));
 
 		Rule rule2 = new Rule();
-		rule2.setRuleName("Rule2");
-		rule2.setAppliesToField("field2");
-		rule2.setDescription("Description 2");
-		rule2.setParameters(Map.of("pattern", "[a-z]+"));
+		appliedRule2.setRuleName("Rule2");
+		appliedRule2.setAppliesToField("field2");
+		appliedRule2.setDescription("Description 2");
+		appliedRule2.setParameters(Map.of("pattern", "[a-z]+"));
 
 		policyRequest = new PolicyRequest();
 		policyRequest.setPolicyName("Test Policy");
@@ -83,7 +96,7 @@ public class PolicyServiceTest {
 		savedPolicy.setDescription("Test Description");
 		savedPolicy.setDomainName("Security");
 		savedPolicy.setPublished(true);
-		savedPolicy.setRules(List.of(rule1, rule2));
+		savedPolicy.setAppliedRules(List.of(appliedRule1, appliedRule2));
 		savedPolicy.setCreatedBy(userId);
 		savedPolicy.setLastUpdatedBy(userId);
 		savedPolicy.setOrganizationId("org-123");

@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Getter;
 import lombok.Setter;
-import sg.edu.nus.iss.edgp.policy.management.entity.Rule;
 
 @Getter
 @Setter

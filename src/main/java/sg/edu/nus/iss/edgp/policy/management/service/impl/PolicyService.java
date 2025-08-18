@@ -16,7 +16,9 @@ import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
 import sg.edu.nus.iss.edgp.policy.management.dto.PolicyDTO;
 import sg.edu.nus.iss.edgp.policy.management.dto.PolicyRequest;
+import sg.edu.nus.iss.edgp.policy.management.dto.Rule;
 import sg.edu.nus.iss.edgp.policy.management.dto.SearchRequest;
+import sg.edu.nus.iss.edgp.policy.management.entity.AppliedRule;
 import sg.edu.nus.iss.edgp.policy.management.entity.Policy;
 import sg.edu.nus.iss.edgp.policy.management.exception.PolicyServiceException;
 import sg.edu.nus.iss.edgp.policy.management.repository.PolicyRepository;
@@ -39,7 +41,40 @@ public class PolicyService implements IPolicyService {
 			policy.setDescription(policyReq.getDescription());
 			policy.setDomainName(policyReq.getDomainName());
 			policy.setPublished(policyReq.isPublished());
-			policy.setRules(policyReq.getRules());
+			List<AppliedRule> ruleList = new ArrayList<>();
+			List<Rule> rules = policyReq.getRules();
+
+			for (Rule rule : rules) {
+
+				AppliedRule appliedRule = new AppliedRule();
+				Optional.ofNullable(rule).filter(r -> r.getRuleName() != null && !r.getRuleName().isEmpty())
+						.ifPresent(r -> {
+							appliedRule.setRuleName(r.getRuleName());
+						});
+
+				Optional.ofNullable(rule)
+						.filter(r -> r.getDescription() != null && !r.getDescription().isEmpty()).ifPresent(r -> {
+							appliedRule.setDescription(r.getDescription());
+
+						});
+
+				Optional.ofNullable(rule).filter(r -> r.getParameters() != null && !r.getParameters().isEmpty())
+						.ifPresent(r -> {
+							appliedRule.setParameters(r.getParameters());
+						});
+
+				Optional.ofNullable(rule)
+						.filter(r -> r.getAppliesToField() != null && !r.getAppliesToField().isEmpty()).ifPresent(r -> {
+							appliedRule.setAppliesToField(String.join(",", r.getAppliesToField()));
+						});
+
+				if (appliedRule != null) {
+					ruleList.add(appliedRule);
+				}
+
+			}
+
+			policy.setAppliedRules(ruleList);
 			policy.setCreatedBy(userId);
 			policy.setLastUpdatedBy(userId);
 			policy.setOrganizationId(policyReq.getOrganizationId());
@@ -74,8 +109,8 @@ public class PolicyService implements IPolicyService {
 
 			if (domainName != null) {
 				boolean publishedStatus = isPublished != null ? isPublished : true;
-				policyPages = policyRepository.findPaginatedByOrganizationIdAndDomainNameAndIsPublished(orgId, domainName,
-						publishedStatus, pageable);
+				policyPages = policyRepository.findPaginatedByOrganizationIdAndDomainNameAndIsPublished(orgId,
+						domainName, publishedStatus, pageable);
 			} else if (isPublished != null) {
 				policyPages = policyRepository.findPaginatedByIsPublishedAndOrganizationId(isPublished, orgId,
 						pageable);
@@ -111,8 +146,8 @@ public class PolicyService implements IPolicyService {
 
 			if (domainName != null) {
 				boolean publishedStatus = isPublished != null ? isPublished : true;
-				dbPolicyList = policyRepository.findAllByIsPublishedAndOrganizationIdAndDomainName(publishedStatus, orgId,
-						domainName);
+				dbPolicyList = policyRepository.findAllByIsPublishedAndOrganizationIdAndDomainName(publishedStatus,
+						orgId, domainName);
 			} else if (isPublished != null) {
 				dbPolicyList = policyRepository.findAllByIsPublishedAndOrganizationId(isPublished, orgId);
 			} else {

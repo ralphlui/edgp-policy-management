@@ -5,7 +5,6 @@ import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
-import sg.edu.nus.iss.edgp.policy.management.entity.Rule;
 
 @Getter
 @Setter

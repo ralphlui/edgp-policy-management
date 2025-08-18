@@ -38,7 +38,7 @@ public class Policy {
 	
 	@OneToMany(cascade = CascadeType.ALL)
 	@JoinColumn(name = "policyId", referencedColumnName = "policyId")
-	private List<Rule> rules = new ArrayList<>();
+	private List<AppliedRule> appliedRules = new ArrayList<>();
 
 	@Column(nullable = false, columnDefinition = "datetime")
 	private LocalDateTime createdDateTime = LocalDateTime.now();

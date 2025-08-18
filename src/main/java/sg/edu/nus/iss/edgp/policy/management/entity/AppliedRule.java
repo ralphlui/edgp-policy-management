@@ -16,7 +16,7 @@ import sg.edu.nus.iss.edgp.policy.management.utility.JsonConverter;
 @Entity
 @Getter
 @Setter
-public class Rule {
+public class AppliedRule {
 
 	@Id
 	@UuidGenerator(style = UuidGenerator.Style.AUTO)
@@ -25,7 +25,7 @@ public class Rule {
 	@Column(nullable = false)
 	private String ruleName;
 	
-	@Column(nullable = false)
+	@Column(nullable = true)
 	private String appliesToField;
 	
 	@Column(nullable = true)
@@ -34,6 +34,4 @@ public class Rule {
 	  @Lob
 	  @Convert(converter = JsonConverter.class)
 	  private Map<String, Object> parameters;
-
-	
 }

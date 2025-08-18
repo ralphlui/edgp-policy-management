@@ -3,49 +3,92 @@ package sg.edu.nus.iss.edgp.policy.management.utility;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.List;
 import java.util.Map;
 
 import sg.edu.nus.iss.edgp.policy.management.dto.PolicyDTO;
+import sg.edu.nus.iss.edgp.policy.management.dto.Rule;
+import sg.edu.nus.iss.edgp.policy.management.entity.AppliedRule;
 import sg.edu.nus.iss.edgp.policy.management.entity.Policy;
-import sg.edu.nus.iss.edgp.policy.management.entity.Rule;
+
+import java.util.*;
 
 public class DTOMapperTest {
 
 	@Test
-    public void testToPolicyDTO_AllFieldsMappedCorrectly() {
-		
-		Rule rule1 = new Rule();
-		rule1.setRuleName("Rule1");
-		rule1.setAppliesToField("field1");
-		rule1.setDescription("Description 1");
-		rule1.setParameters(Map.of("min", 1, "max", 10));
-		
-        // Arrange
-        Policy policy = new Policy();
-        policy.setPolicyId("P123");
-        policy.setPolicyName("Test Policy");
-        policy.setDomainName("Test Domain");
-        policy.setDescription("Policy Description");
-        policy.setPublished(true);
-        policy.setCreatedBy("creatorUser");
-        policy.setLastUpdatedBy("updaterUser");
-        policy.setRules(List.of(rule1));
-        policy.setOrganizationId("ORG456");
+	void testToPolicyDTO_basicFields() {
+		Policy policy = new Policy();
+		policy.setPolicyId("P1");
+		policy.setPolicyName("PolicyName");
+		policy.setDomainName("Domain");
+		policy.setDescription("Test policy");
+		policy.setPublished(true);
+		policy.setCreatedBy("creator");
+		policy.setLastUpdatedBy("updater");
+		policy.setOrganizationId("ORG123");
 
-        // Act
-        PolicyDTO policyDTO = DTOMapper.toPolicyDTO(policy); // assuming the method is in a class called PolicyMapper
+		PolicyDTO dto = DTOMapper.toPolicyDTO(policy);
 
-        // Assert
-        assertNotNull(policyDTO);
-        assertEquals(policy.getPolicyId(), policyDTO.getPolicyId());
-        assertEquals(policy.getPolicyName(), policyDTO.getPolicyName());
-        assertEquals(policy.getDomainName(), policyDTO.getDomainName());
-        assertEquals(policy.getDescription(), policyDTO.getDescription());
-        assertEquals(policy.isPublished(), policyDTO.isPublished());
-        assertEquals(policy.getCreatedBy(), policyDTO.getCreatedBy());
-        assertEquals(policy.getLastUpdatedBy(), policyDTO.getLastUpdatedBy());
-        assertEquals(policy.getRules(), policyDTO.getRules());
-        assertEquals(policy.getOrganizationId(), policyDTO.getOrganizationId());
-    }
+		assertEquals("P1", dto.getPolicyId());
+		assertEquals("PolicyName", dto.getPolicyName());
+		assertEquals("Domain", dto.getDomainName());
+		assertEquals("Test policy", dto.getDescription());
+		assertTrue(dto.isPublished());
+		assertEquals("creator", dto.getCreatedBy());
+		assertEquals("updater", dto.getLastUpdatedBy());
+		assertEquals("ORG123", dto.getOrganizationId());
+		assertTrue(dto.getRules() == null || dto.getRules().isEmpty(),
+				"rules should be null or empty when no applied rules");
+	}
+
+	@Test
+	void testToPolicyDTO_withNullAppliedRules() {
+		Policy policy = new Policy();
+		policy.setPolicyId("P2");
+		policy.setAppliedRules(null); // explicitly null
+
+		PolicyDTO dto = DTOMapper.toPolicyDTO(policy);
+
+		assertEquals("P2", dto.getPolicyId());
+		assertTrue(dto.getRules() == null || dto.getRules().isEmpty(),
+				"rules should be null or empty when appliedRules is null");
+	}
+
+	@Test
+	void testToPolicyDTO_withAppliedRules() {
+		AppliedRule ar = new AppliedRule();
+		ar.setAppliesToField("field1, field2");
+		ar.setDescription(" A rule description ");
+		ar.setRuleName(" RuleOne ");
+		Map<String, Object> params = new HashMap<>();
+		params.put("key1", "val1");
+		ar.setParameters(params);
+
+		Policy policy = new Policy();
+		policy.setPolicyId("P3");
+		policy.setAppliedRules(Collections.singletonList(ar));
+
+		PolicyDTO dto = DTOMapper.toPolicyDTO(policy);
+
+		assertNotNull(dto.getRules());
+		assertEquals(1, dto.getRules().size());
+
+		Rule rule = dto.getRules().get(0);
+		assertEquals(Arrays.asList("field1", "field2"), rule.getAppliesToField());
+		assertEquals("A rule description", rule.getDescription());
+		assertEquals("RuleOne", rule.getRuleName());
+		assertEquals("val1", rule.getParameters().get("key1"));
+	}
+
+	@Test
+	void testToPolicyDTO_withEmptyAppliedRule() {
+		AppliedRule emptyRule = new AppliedRule(); // all fields null/empty
+		Policy policy = new Policy();
+		policy.setAppliedRules(Collections.singletonList(emptyRule));
+
+		PolicyDTO dto = DTOMapper.toPolicyDTO(policy);
+
+		// Rule should not be added because nothing was populated
+		assertTrue(dto.getRules() == null || dto.getRules().isEmpty(),
+				"rules should be null or empty when appliedRule is empty");
+	}
 }

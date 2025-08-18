@@ -37,13 +37,10 @@ public class PolicyValidationStrategy implements IAPIHelperValidationStrategy<Po
 	public ValidationResult validateCreation(PolicyRequest policyReq, String authorizationHeader, String userOrgId) {
 		ValidationResult validationResult = new ValidationResult();
 		String policyName = policyReq.getPolicyName();
-		String domainName = policyReq.getDomainName();
 
 		List<String> missingFields = new ArrayList<>();
 		if (policyName == null || policyName.isEmpty())
 			missingFields.add("Policy name");
-		if (domainName == null || domainName.isEmpty())
-			missingFields.add("Domain name");
 
 		if (!missingFields.isEmpty()) {
 			return buildInvalidResult(String.join(" and ", missingFields) + " is required");
