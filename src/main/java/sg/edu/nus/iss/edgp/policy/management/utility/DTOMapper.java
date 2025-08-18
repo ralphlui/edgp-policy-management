@@ -52,19 +52,19 @@ public class DTOMapper {
 			Rule rule = new Rule();
 			boolean populated = false;
 
-			if (hasText(ar.getAppliesToField())) {
+			if (GeneralUtility.hasText(ar.getAppliesToField())) {
 				List<String> fields = Arrays.stream(COMMA.split(ar.getAppliesToField())).filter(f -> !f.isEmpty())
 						.collect(Collectors.toList());
 				rule.setAppliesToField(fields);
 				populated = true;
 			}
 
-			if (hasText(ar.getDescription())) {
+			if (GeneralUtility.hasText(ar.getDescription())) {
 				rule.setDescription(ar.getDescription().trim());
 				populated = true;
 			}
 			
-			if (hasText(ar.getRuleId())) {
+			if (GeneralUtility.hasText(ar.getRuleId())) {
 				rule.setRuleId(ar.getRuleId().trim());
 				populated = true;
 			}
@@ -75,7 +75,7 @@ public class DTOMapper {
 				populated = true;
 			}
 
-			if (hasText(ar.getRuleName())) {
+			if (GeneralUtility.hasText(ar.getRuleName())) {
 				rule.setRuleName(ar.getRuleName().trim());
 				populated = true;
 			}
@@ -86,9 +86,5 @@ public class DTOMapper {
 		}
 
 		return rules;
-	}
-
-	private static boolean hasText(String s) {
-		return s != null && !s.trim().isEmpty();
 	}
 }

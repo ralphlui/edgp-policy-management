@@ -2,10 +2,14 @@ package sg.edu.nus.iss.edgp.policy.management.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -156,7 +160,30 @@ public class PolicyService implements IPolicyService {
 			dPolicy.setLastUpdatedDateTime(LocalDateTime.now());
 			dPolicy.setPublished(policyReq.isPublished());
 
-			policyReq.getRules();
+			Optional.ofNullable(policyReq.getDomainName()).filter(s -> !s.trim().isEmpty())
+					.ifPresent(dPolicy::setDomainName);
+
+			for (Rule updateRule : policyReq.getRules()) {
+				boolean found = false;
+
+				for (AppliedRule dbAppliedRule : dPolicy.getAppliedRules()) {
+					if (updateRule.getRuleId() != null && dbAppliedRule.getRuleId().equals(updateRule.getRuleId())) {
+						// Update existing rule
+						AppliedRule appliedRule = updateRule(dbAppliedRule, updateRule);
+						dbAppliedRule = appliedRule;
+						found = true;
+						break;
+					}
+				}
+
+				// If rule not found in DB, add as new AppliedRule
+				if (!found) {
+					AppliedRule newAppliedRule = new AppliedRule();
+					newAppliedRule = updateRule(newAppliedRule, updateRule);
+					dPolicy.getAppliedRules().add(newAppliedRule);
+				}
+			}
+
 			logger.info("Updating Policy...");
 			Policy updatedPolicy = policyRepository.save(dPolicy);
 			logger.info("Policy is updated successfully.");
@@ -165,6 +192,46 @@ public class PolicyService implements IPolicyService {
 			logger.error("Exception occurred while updating policy", ex);
 			throw new PolicyServiceException("An error occurred while updating policy", ex);
 		}
+	}
+
+	private AppliedRule updateRule(AppliedRule appliedRule, Rule rule) {
+
+		Optional.ofNullable(rule).filter(r -> r.getRuleName() != null && !r.getRuleName().isEmpty()).ifPresent(r -> {
+			appliedRule.setRuleName(r.getRuleName());
+		});
+
+		Optional.ofNullable(rule).filter(r -> r.getDescription() != null && !r.getDescription().isEmpty())
+				.ifPresent(r -> {
+					appliedRule.setDescription(r.getDescription());
+
+				});
+
+		Optional.ofNullable(rule).filter(r -> r.getParameters() != null && !r.getParameters().isEmpty())
+				.ifPresent(r -> {
+					appliedRule.setParameters(r.getParameters());
+				});
+
+		Optional.ofNullable(rule).filter(r -> r.getAppliesToField() != null && !r.getAppliesToField().isEmpty())
+				.ifPresent(r -> {
+					String appliedFields = appliedRule.getAppliesToField();
+					Set<String> merged = new LinkedHashSet<>();
+
+					if (appliedFields != null && !appliedFields.isBlank()) {
+						List<String> appliedRules = Arrays.stream(appliedFields.split(",")).map(String::trim)
+								.filter(s -> !s.isEmpty()).collect(Collectors.toList());
+						merged.addAll(appliedRules);
+					}
+
+					if (r.getAppliesToField() != null) {
+						merged.addAll(r.getAppliesToField());
+					}
+
+					appliedFields = String.join(",", merged);
+
+					appliedRule.setAppliesToField(appliedFields);
+				});
+
+		return appliedRule;
 	}
 
 	public PolicyDTO findByPolicyId(String policyId) {

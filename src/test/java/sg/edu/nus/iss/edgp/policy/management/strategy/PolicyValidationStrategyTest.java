@@ -57,7 +57,7 @@ public class PolicyValidationStrategyTest {
 		ValidationResult result = validationStrategy.validateCreation(request, AUTH_HEADER, userOrgId);
 
 		assertFalse(result.isValid());
-		assertEquals("Policy name is required", result.getMessage());
+		assertEquals("Policy name and Domain name is required", result.getMessage());
 	}
 
 	@Test

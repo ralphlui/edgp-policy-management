@@ -15,4 +15,7 @@ public class GeneralUtility {
 		}
 	}
 
+	public static boolean hasText(String s) {
+		return s != null && !s.trim().isEmpty();
+	}
 }
