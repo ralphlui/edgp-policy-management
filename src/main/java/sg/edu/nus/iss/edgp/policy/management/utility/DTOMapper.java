@@ -63,6 +63,11 @@ public class DTOMapper {
 				rule.setDescription(ar.getDescription().trim());
 				populated = true;
 			}
+			
+			if (hasText(ar.getRuleId())) {
+				rule.setRuleId(ar.getRuleId().trim());
+				populated = true;
+			}
 
 			Map<String, Object> params = ar.getParameters();
 			if (params != null && !params.isEmpty()) {

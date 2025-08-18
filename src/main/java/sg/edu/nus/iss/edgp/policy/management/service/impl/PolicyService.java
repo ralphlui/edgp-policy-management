@@ -41,40 +41,10 @@ public class PolicyService implements IPolicyService {
 			policy.setDescription(policyReq.getDescription());
 			policy.setDomainName(policyReq.getDomainName());
 			policy.setPublished(policyReq.isPublished());
-			List<AppliedRule> ruleList = new ArrayList<>();
-			List<Rule> rules = policyReq.getRules();
 
-			for (Rule rule : rules) {
+			Optional.ofNullable(addAppliedRules(policyReq.getRules())).filter(list -> !list.isEmpty())
+					.ifPresent(policy::setAppliedRules);
 
-				AppliedRule appliedRule = new AppliedRule();
-				Optional.ofNullable(rule).filter(r -> r.getRuleName() != null && !r.getRuleName().isEmpty())
-						.ifPresent(r -> {
-							appliedRule.setRuleName(r.getRuleName());
-						});
-
-				Optional.ofNullable(rule)
-						.filter(r -> r.getDescription() != null && !r.getDescription().isEmpty()).ifPresent(r -> {
-							appliedRule.setDescription(r.getDescription());
-
-						});
-
-				Optional.ofNullable(rule).filter(r -> r.getParameters() != null && !r.getParameters().isEmpty())
-						.ifPresent(r -> {
-							appliedRule.setParameters(r.getParameters());
-						});
-
-				Optional.ofNullable(rule)
-						.filter(r -> r.getAppliesToField() != null && !r.getAppliesToField().isEmpty()).ifPresent(r -> {
-							appliedRule.setAppliesToField(String.join(",", r.getAppliesToField()));
-						});
-
-				if (appliedRule != null) {
-					ruleList.add(appliedRule);
-				}
-
-			}
-
-			policy.setAppliedRules(ruleList);
 			policy.setCreatedBy(userId);
 			policy.setLastUpdatedBy(userId);
 			policy.setOrganizationId(policyReq.getOrganizationId());
@@ -185,6 +155,8 @@ public class PolicyService implements IPolicyService {
 			dPolicy.setLastUpdatedBy(userId);
 			dPolicy.setLastUpdatedDateTime(LocalDateTime.now());
 			dPolicy.setPublished(policyReq.isPublished());
+
+			policyReq.getRules();
 			logger.info("Updating Policy...");
 			Policy updatedPolicy = policyRepository.save(dPolicy);
 			logger.info("Policy is updated successfully.");
@@ -208,6 +180,41 @@ public class PolicyService implements IPolicyService {
 			throw new PolicyServiceException("An error occurred while searching fot the policy by policy id", e);
 		}
 
+	}
+
+	private List<AppliedRule> addAppliedRules(List<Rule> rules) {
+
+		List<AppliedRule> appliedRuleList = new ArrayList<>();
+		for (Rule rule : rules) {
+
+			AppliedRule appliedRule = new AppliedRule();
+			Optional.ofNullable(rule).filter(r -> r.getRuleName() != null && !r.getRuleName().isEmpty())
+					.ifPresent(r -> {
+						appliedRule.setRuleName(r.getRuleName());
+					});
+
+			Optional.ofNullable(rule).filter(r -> r.getDescription() != null && !r.getDescription().isEmpty())
+					.ifPresent(r -> {
+						appliedRule.setDescription(r.getDescription());
+
+					});
+
+			Optional.ofNullable(rule).filter(r -> r.getParameters() != null && !r.getParameters().isEmpty())
+					.ifPresent(r -> {
+						appliedRule.setParameters(r.getParameters());
+					});
+
+			Optional.ofNullable(rule).filter(r -> r.getAppliesToField() != null && !r.getAppliesToField().isEmpty())
+					.ifPresent(r -> {
+						appliedRule.setAppliesToField(String.join(",", r.getAppliesToField()));
+					});
+
+			if (appliedRule != null) {
+				appliedRuleList.add(appliedRule);
+			}
+		}
+
+		return appliedRuleList;
 	}
 
 }

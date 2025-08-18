@@ -10,6 +10,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Rule {
+	
+	private String ruleId;
 	private String ruleName;
 	private List<String> appliesToField = new ArrayList<>();
 	private String description = "";
