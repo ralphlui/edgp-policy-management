@@ -18,6 +18,7 @@ import sg.edu.nus.iss.edgp.policy.management.dto.PolicyDTO;
 import sg.edu.nus.iss.edgp.policy.management.dto.PolicyRequest;
 import sg.edu.nus.iss.edgp.policy.management.dto.ValidationResult;
 import sg.edu.nus.iss.edgp.policy.management.entity.Policy;
+import sg.edu.nus.iss.edgp.policy.management.service.impl.JwtService;
 import sg.edu.nus.iss.edgp.policy.management.service.impl.PolicyService;
 import sg.edu.nus.iss.edgp.policy.management.strategy.IAPIHelperValidationStrategy;
 import sg.edu.nus.iss.edgp.policy.management.utility.GeneralUtility;
@@ -31,6 +32,7 @@ public class PolicyValidationStrategy implements IAPIHelperValidationStrategy<Po
 	private final OrganizationAPICall orgAPICall;
 	private static final Logger logger = LoggerFactory.getLogger(PolicyValidationStrategy.class);
 	private final JSONReader jsonReader;
+	private final JwtService jwtService;
 
 
 	@Override
@@ -109,14 +111,18 @@ public class PolicyValidationStrategy implements IAPIHelperValidationStrategy<Po
 	    if (isBlank(userOrgId)) {
 	        return buildInvalidResult("Organization ID missing or invalid in token");
 	    }
+	    
+	    String apiKey = jwtService.extractAPIKeyFromToken(authHeader.substring(7));
+		ValidationResult validationResult = new ValidationResult();
+		validationResult.setValid(true);
+		
+		if (apiKey != null && !apiKey.isEmpty()) { return validationResult; }
 
 	    boolean isActive = Boolean.TRUE.equals(validateActiveOrganization(userOrgId, authHeader));
 	    if (!isActive) {
 	        return buildInvalidResult("Invalid organization. Unable to view policy.");
 	    }
 
-	    ValidationResult validationResult = new ValidationResult();
-	    validationResult.setValid(true);
 	    return validationResult;
 	}
 
