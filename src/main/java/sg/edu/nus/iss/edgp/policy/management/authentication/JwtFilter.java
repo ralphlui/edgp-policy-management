@@ -43,27 +43,32 @@ public class JwtFilter extends OncePerRequestFilter {
 		}
 
 		String jwtToken = authorizationHeader.substring(7);
-		try {
-			UserDetails userDetails = jwtService.getUserDetail(authorizationHeader, jwtToken);
-			if (jwtService.validateToken(jwtToken, userDetails)) {
-				UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-						userDetails, null, userDetails.getAuthorities());
-				authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-				SecurityContextHolder.getContext().setAuthentication(authentication);
-			} else {
-				handleErrorResponse(response, "Invalid or expired JWT token", HttpServletResponse.SC_UNAUTHORIZED,
-						auditDTO);
+		String apiKey = jwtService.extractAPIKeydFromToken(jwtToken);
+
+		if (apiKey == null || apiKey.isEmpty()) {
+
+			try {
+				UserDetails userDetails = jwtService.getUserDetail(authorizationHeader, jwtToken);
+				if (jwtService.validateToken(jwtToken, userDetails)) {
+					UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+							userDetails, null, userDetails.getAuthorities());
+					authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+					SecurityContextHolder.getContext().setAuthentication(authentication);
+				} else {
+					handleErrorResponse(response, "Invalid or expired JWT token", HttpServletResponse.SC_UNAUTHORIZED,
+							auditDTO);
+					return;
+				}
+			} catch (ExpiredJwtException e) {
+				handleErrorResponse(response, "JWT token is expired", HttpServletResponse.SC_UNAUTHORIZED, auditDTO);
+				return;
+			} catch (MalformedJwtException | SecurityException e) {
+				handleErrorResponse(response, "Invalid JWT token", HttpServletResponse.SC_UNAUTHORIZED, auditDTO);
+				return;
+			} catch (Exception e) {
+				handleErrorResponse(response, e.getMessage(), HttpServletResponse.SC_UNAUTHORIZED, auditDTO);
 				return;
 			}
-		} catch (ExpiredJwtException e) {
-			handleErrorResponse(response, "JWT token is expired", HttpServletResponse.SC_UNAUTHORIZED, auditDTO);
-			return;
-		} catch (MalformedJwtException | SecurityException e) {
-			handleErrorResponse(response, "Invalid JWT token", HttpServletResponse.SC_UNAUTHORIZED, auditDTO);
-			return;
-		} catch (Exception e) {
-			handleErrorResponse(response, e.getMessage(), HttpServletResponse.SC_UNAUTHORIZED, auditDTO);
-			return;
 		}
 
 		filterChain.doFilter(request, response);

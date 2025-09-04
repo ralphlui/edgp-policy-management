@@ -115,5 +115,15 @@ public class JwtService {
 			return "Invalid Scope";
 		}
 	}
+	
+	public String extractAPIKeydFromToken(String token) {
+		try {
+			Claims claims = extractAllClaims(token);
+			return claims.get("apiKey", String.class);
+		} catch (Exception e) {
+			return "";
+		}
+	}
+
 
 }

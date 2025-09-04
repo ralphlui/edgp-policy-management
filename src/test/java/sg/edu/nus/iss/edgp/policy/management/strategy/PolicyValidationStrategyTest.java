@@ -47,7 +47,7 @@ public class PolicyValidationStrategyTest {
 
 	@BeforeEach
 	public void setup() {
-		validationStrategy = new PolicyValidationStrategy(policyService, orgAPICall, jsonReader);
+		validationStrategy = new PolicyValidationStrategy(policyService, orgAPICall, jsonReader, jwtService);
 	}
 
 	@Test
