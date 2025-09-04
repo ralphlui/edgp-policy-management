@@ -43,7 +43,7 @@ public class JwtFilter extends OncePerRequestFilter {
 		}
 
 		String jwtToken = authorizationHeader.substring(7);
-		String apiKey = jwtService.extractAPIKeydFromToken(jwtToken);
+		String apiKey = jwtService.extractAPIKeyFromToken(jwtToken);
 
 		if (apiKey == null || apiKey.isEmpty()) {
 

@@ -116,7 +116,7 @@ public class JwtService {
 		}
 	}
 	
-	public String extractAPIKeydFromToken(String token) {
+	public String extractAPIKeyFromToken(String token) {
 		try {
 			Claims claims = extractAllClaims(token);
 			return claims.get("apiKey", String.class);

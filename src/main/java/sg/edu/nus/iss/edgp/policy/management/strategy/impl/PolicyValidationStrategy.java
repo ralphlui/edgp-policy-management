@@ -111,7 +111,7 @@ public class PolicyValidationStrategy implements IAPIHelperValidationStrategy<Po
 	        return buildInvalidResult("Organization ID missing or invalid in token");
 	    }
 	    
-	    String apiKey = jwtService.extractAPIKeydFromToken(authHeader.substring(7));
+	    String apiKey = jwtService.extractAPIKeyFromToken(authHeader.substring(7));
 		ValidationResult validationResult = new ValidationResult();
 		validationResult.setValid(true);
 		
